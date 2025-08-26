@@ -1,0 +1,32 @@
+# Development Dockerfile cho Vue 3 Wedding Frontend
+FROM node:18-alpine
+
+# Cài đặt các dependencies cần thiết
+RUN apk add --no-cache git
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+RUN npm ci --silent
+
+# Copy source code
+COPY . .
+
+# Create node_modules volume mount point
+RUN mkdir -p /app/node_modules/.cache
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5173 || exit 1
+
+# Start development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

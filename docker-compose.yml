@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  # Development service với Vite hot reload
+  wedding-frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: wedding-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - VITE_PORT=5173
+    command: npm run dev
+    stdin_open: true
+    tty: true
+    profiles:
+      - development
+
+  # Production service với Nginx
+  wedding-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: wedding-frontend-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./ssl:/etc/nginx/ssl
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    profiles:
+      - production
+
+  # Development với nginx (để test production build locally)
+  wedding-frontend-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: wedding-frontend-staging
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/conf.d/default.conf
+    environment:
+      - NODE_ENV=staging
+    profiles:
+      - staging
