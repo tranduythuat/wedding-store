@@ -1,8 +1,8 @@
-# Development Dockerfile cho Vue 3 Wedding Frontend
-FROM node:18-alpine
+# Multi-stage build cho Production Wedding Frontend
+FROM node:18-alpine AS builder
 
-# Cài đặt các dependencies cần thiết
-RUN apk add --no-cache git
+# Install build dependencies
+RUN apk add --no-cache git python3 make g++
 
 # Set working directory
 WORKDIR /app
@@ -10,23 +10,28 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
-
-RUN npm ci --silent
+# Install dependencies (cần devDependencies để build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Create node_modules volume mount point
-RUN mkdir -p /app/node_modules/.cache
+# Build application
+RUN npm run build
 
-# Expose Vite dev server port
-EXPOSE 5173
+# Production stage với Nginx
+FROM nginx:alpine
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5173 || exit 1
+# Remove default nginx website
+RUN rm -rf /usr/share/nginx/html/*
 
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Copy built application
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80 443
+
+CMD ["nginx", "-g", "daemon off;"]
