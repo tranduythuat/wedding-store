@@ -12,6 +12,8 @@ COPY package*.json ./
 # Cài toàn bộ dependencies (bao gồm devDependencies để build)
 RUN npm install
 
+RUN npm install -D terser
+
 # Copy source code
 COPY . .
 
