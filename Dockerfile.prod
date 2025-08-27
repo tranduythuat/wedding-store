@@ -1,54 +1,48 @@
-# Multi-stage build cho Production Wedding Frontend
+# ---- Build Stage ----
 FROM node:18-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git python3 make g++
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production
+# Cài toàn bộ dependencies (bao gồm devDependencies để build)
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build application
+# Build app (cần vite ở devDependencies)
 RUN npm run build
 
-# Production stage với Nginx
+
+# ---- Production Stage ----
 FROM nginx:alpine
 
-# Install curl cho health check
 RUN apk add --no-cache curl
 
-# Remove default nginx website
+# Remove default nginx site
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built application
+# Copy build result từ builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
+# Copy nginx config
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 
-# Create log directory
-RUN mkdir -p /var/log/nginx
+# Logs & permissions
+RUN mkdir -p /var/log/nginx \
+  && chown -R nginx:nginx /usr/share/nginx/html \
+  && chown -R nginx:nginx /var/log/nginx \
+  && chown -R nginx:nginx /var/cache/nginx
 
-# Set proper permissions
-RUN chown -R nginx:nginx /usr/share/nginx/html
-RUN chown -R nginx:nginx /var/log/nginx
-RUN chown -R nginx:nginx /var/cache/nginx
-
-# Health check
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost/health || exit 1
 
-# Expose ports
 EXPOSE 80 443
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
