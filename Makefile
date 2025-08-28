@@ -40,6 +40,9 @@ logs:
 stop:
 	docker-compose down
 
+dev down:
+	docker-compose --profile development down
+
 # Install dependencies locally
 install:
 	npm install
