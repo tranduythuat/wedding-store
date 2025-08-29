@@ -1,12 +1,20 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
+import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: '@use "src/styles/variables.scss" as *;'
+      }
+    },
+    devSourcemap: true
+  },
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': path.resolve(__dirname, './src')
     }
   },
   server: {
@@ -33,7 +41,4 @@ export default defineConfig({
       }
     }
   },
-  css: {
-    devSourcemap: true
-  }
 })

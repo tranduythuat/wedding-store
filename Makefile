@@ -15,6 +15,16 @@ help:
 dev:
 	docker-compose --profile development up --build
 
+dev-status:
+	docker-compose --profile development ps
+	
+dev-up:
+	docker-compose --profile development up -d
+
+dev-stop:
+	docker-compose --profile development down
+dev-clean:
+	docker-compose --profile development down -v
 # Production environment
 prod:
 	docker-compose --profile production up --build -d
@@ -40,7 +50,7 @@ logs:
 stop:
 	docker-compose down
 
-dev down:
+dev-down:
 	docker-compose --profile development down
 
 # Install dependencies locally
